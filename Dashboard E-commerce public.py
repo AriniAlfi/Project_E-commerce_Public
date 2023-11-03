@@ -7,7 +7,7 @@ sns.set(style='dark')
 
 #create_daily_orders_df() digunakan untuk menyiapkan daily_orders_df
 def create_daily_orders_df(df):
-    daily_orders_df = df.resample(rule='D', on='Order_approved_date').agg({
+    daily_orders_df = df.resample(rule='D', on='order_approved_at').agg({
         "order_id": "nunique",
         "revenue": "sum"
     })
@@ -20,21 +20,21 @@ def create_daily_orders_df(df):
 
 #create_sum_order_items_df() bertanggung jawab untuk menyiapkan sum_orders__category_ items_df.
 def create_sum_order_items_df(df):
-    sum_order_items_df = df.groupby("product_category_name").quantity_x.sum().sort_values(ascending=False).reset_index()
+    sum_order_items_df = df.groupby("product_category_name").product_id_x.nunique().sort_values(ascending=False).reset_index()
     return sum_order_items_df
 
 #create__byorderstatus_df() digunakan untuk menyiapkan byorderstatus_df.
 def create_byorderstatus_df(df):
-    byorderstatus_df = df.groupby(by="Order_status").Customer_id.nunique().reset_index()
+    byorderstatus_df = df.groupby(by="order_status").order_id.nunique().reset_index()
     byorderstatus_df.rename(columns={
-        "Customer_id": "customer_count"
+        "order_id": "order_count"
     }, inplace=True)
     
     return byorderstatus_df
 
 #create_bystate_df() digunakan untuk menyiapkan bystate_df.
 def create_bystate_df(df):
-    bystate_df = df.groupby(by="Customer_state").customer_id.nunique().reset_index()
+    bystate_df = df.groupby(by="customer_state").customer_id.nunique().reset_index()
     bystate_df.rename(columns={
         "customer_id": "customer_count"
     }, inplace=True)
@@ -50,22 +50,22 @@ def create_byreviews_df(df):
     
     return byreviews_df
 
-all1_df = pd.read_csv("all1_data.csv")
+ecommerce2_df = pd.read_csv("ecommerce2.csv")
 
-datetime_columns = ["order_approved_date", "order_delivered_customer_date"]
-all1_df.sort_values(by="order_approved_date", inplace=True)
-all1_df.reset_index(inplace=True)
+datetime_columns = ["order_approved_at", "order_delivered_customer_date"]
+ecommerce2_df.sort_values(by="order_approved_at", inplace=True)
+ecommerce2_df.reset_index(inplace=True)
  
 for column in datetime_columns:
-    all1_df[column] = pd.to_datetime(all1_df[column])
+    ecommerce2_df[column] = pd.to_datetime(ecommerce2_df[column])
 
 
-min_date = all1_df["order_approved_date"].min()
-max_date = all1_df["order_approved_date"].max()
+min_date = ecommerce2_df["order_approved_at"].min()
+max_date = ecommerce2_df["order_approved_at"].max()
 
 with st.sidebar:
     # Menambahkan logo perusahaan
-    st.image("https://github.com/AriniAlfi/logo-e-commerce-public/blob/8bb9dabf896e2b6aad16fb636df0c83876bcf16a/README.md")
+    st.image("https://github.com/AriniAlfi/e-commerce-public/blob/8f4324b6a2cc8ebb186552e986529865c6e39f64/logo-ecommerce.jpg")
 
     # Mengambil start_date & end_date dari date_input
     start_date, end_date = st.date_input(
@@ -74,8 +74,8 @@ with st.sidebar:
         value=[min_date, max_date]
     )
 
-main_df = all1_df[(all1_df["order_approved_date"] >= str(start_date)) & 
-                (all1_df["order_approved_date"] <= str(end_date))]
+main_df = ecommerce2_df[(ecommerce2_df["order_approved_at"] >= str(start_date)) & 
+                        (ecommerce2_df["order_approved_at"] <= str(end_date))]
     
 daily_orders_df = create_daily_orders_df(main_df)
 sum_order_items_df = create_sum_order_items_df(main_df)
@@ -99,100 +99,102 @@ with col2:
     total_revenue = format_currency(daily_orders_df.revenue.sum(), "AUD", locale='es_CO') 
     st.metric("Total Revenue", value=total_revenue)
  
-fig, ax = plt.subplots(figsize=(16, 8))
+fig, ax = plt.subplots(figsize=(20, 10))
 ax.plot(
-    daily_orders_df["order_approved_date"],
+    daily_orders_df["order_approved_at"],
     daily_orders_df["order_count"],
     marker='o', 
     linewidth=2,
     color="#90CAF9"
 )
 ax.tick_params(axis='y', labelsize=20)
-ax.tick_params(axis='x', labelsize=15)
+ax.tick_params(axis='x', labelsize=25)
  
 st.pyplot(fig)
 
 st.subheader("Best & Worst Performing Category Product")
  
-fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(35, 15))
+fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(35, 20))
  
 colors = ["#90CAF9", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3"]
  
-sns.barplot(x="product_id", y="product_category_name", data=sum_order_items_df.head(5), palette=colors, ax=ax[0])
+sns.barplot(x="product_id_x", y="product_category_name", data=sum_order_items_df.head(5), palette=colors, ax=ax[0])
 ax[0].set_ylabel(None)
 ax[0].set_xlabel(None)
-ax[0].set_title("Best Performing Category Product", loc="center", fontsize=15)
+ax[0].set_title("Best Performing Category Product", loc="center", fontsize=40)
 ax[0].tick_params(axis='y', labelsize=35)
 ax[0].tick_params(axis='x', labelsize=30)
  
-sns.barplot(x="product_id", y="product_category_name", data=sum_order_items_df.sort_values(by="product_id", ascending=True).head(5), palette=colors, ax=ax[1])
+sns.barplot(x="product_id_x", y="product_category_name", data=sum_order_items_df.sort_values(by="product_id_x", ascending=True).head(5), palette=colors, ax=ax[1])
 ax[1].set_ylabel(None)
 ax[1].set_xlabel(None)
 ax[1].invert_xaxis()
 ax[1].yaxis.set_label_position("right")
 ax[1].yaxis.tick_right()
-ax[1].set_title("Worst Performing Category Product", loc="center", fontsize=15)
+ax[1].set_title("Worst Performing Category Product", loc="center", fontsize=40)
 ax[1].tick_params(axis='y', labelsize=35)
 ax[1].tick_params(axis='x', labelsize=30)
  
-plt.suptitle("Best and Worst Performing Category Product", fontsize=20)
+plt.suptitle("Best and Worst Performing Category Product", fontsize=50)
 plt.show()
 st.pyplot(fig)
 
 st.subheader("Customer Demographics")
  
-col1, col2 = st.columns(2)
+col1, col2 ,col3 = st.columns(3)
  
 with col1:
     fig, ax = plt.subplots(figsize=(20, 10))
- 
+    colors = ["#D3D3D3", "#D3D3D3","#D3D3D3","#D3D3D3","#90CAF9","#D3D3D3", "#D3D3D3"]
     sns.barplot(
-        y="customer_count", 
+        y="order_count", 
         x="order_status",
-        data=bystate_df.sort_values(by="order_status", ascending=False),
+        data=byorderstatus_df.sort_values(by="order_status", ascending=False),
         palette=colors,
         ax=ax
     )
-    ax.set_title("Number of Customer by Order Status", loc="center", fontsize=50)
-    ax.set_ylabel(None)
-    ax.set_xlabel(None)
-    ax.tick_params(axis='x', labelsize=35)
-    ax.tick_params(axis='y', labelsize=30)
-    st.pyplot(fig)
+ax.set_title("Number of Customer by Order Status", loc="center", fontsize=30)
+ax.set_ylabel(None)
+ax.set_xlabel(None)
+ax.tick_params(axis='x', labelsize=20)
+ax.tick_params(axis='y', labelsize=25)
+st.pyplot(fig)
  
 with col2:
     fig, ax = plt.subplots(figsize=(20, 10))
     
-    colors = ["#D3D3D3", "#90CAF9", "#D3D3D3", "#D3D3D3", "#D3D3D3"]
+    colors = ["#D3D3D3", "#D3D3D3","#D3D3D3","#D3D3D3","#90CAF9"]
  
     sns.barplot(
         y="order_count", 
-        x="order_review",
-        data=byorderstatus_df.sort_values(by="order_review", ascending=False),
+        x="review_score",
+        data=byreviews_df.sort_values(by="review_score", ascending=False),
         palette=colors,
         ax=ax
     )
-    ax.set_title("Number of Customer by Order Reviews", loc="center", fontsize=50)
-    ax.set_ylabel(None)
-    ax.set_xlabel(None)
-    ax.tick_params(axis='x', labelsize=35)
-    ax.tick_params(axis='y', labelsize=30)
-    st.pyplot(fig)
+ax.set_title("Number of Customer by Order Reviews", loc="center", fontsize=30)
+ax.set_ylabel(None)
+ax.set_xlabel(None)
+ax.tick_params(axis='x', labelsize=20)
+ax.tick_params(axis='y', labelsize=25)
+st.pyplot(fig)
  
-fig, ax = plt.subplots(figsize=(20, 10))
-colors = ["#90CAF9", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3", "#D3D3D3"]
-sns.barplot(
-    x="customer_count", 
-    y="state",
-    data=bystate_df.sort_values(by="customer_count", ascending=False),
-    palette=colors,
-    ax=ax
+with col3:
+    fig, ax = plt.subplots(figsize=(20, 10))
+    colors = ["#90CAF9"]
+    sns.barplot(
+        x="customer_count", 
+        y="customer_state",
+        data=bystate_df.sort_values(by="customer_count", ascending=False),
+        palette=colors,
+        ax=ax
 )
 ax.set_title("Number of Customer by States", loc="center", fontsize=30)
 ax.set_ylabel(None)
 ax.set_xlabel(None)
 ax.tick_params(axis='y', labelsize=20)
 ax.tick_params(axis='x', labelsize=15)
+
 st.pyplot(fig)
  
 st.caption('Copyright (c) Dicoding 2023')
