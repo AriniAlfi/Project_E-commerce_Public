@@ -65,7 +65,7 @@ max_date = ecommerce2_df["order_approved_at"].max()
 
 with st.sidebar:
     # Menambahkan logo perusahaan
-    st.image("https://github.com/AriniAlfi/e-commerce-public/blob/f89e09de1f908bad477c012ce4985ab6be3114bf/logo-ecommerce.png")
+    st.image("https://github.com/AriniAlfi/e-commerce-public/raw/main/logo-ecommerce.png")
 
     # Mengambil start_date & end_date dari date_input
     start_date, end_date = st.date_input(
